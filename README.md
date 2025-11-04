@@ -8,9 +8,24 @@ Mea maxuma culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly 
 
 A minimalist Python script to create beautiful slideshow videos from images and videos with background music.
 
+## Quick Start
+
+1. Clone the repository
+2. Make sure you have ffmpeg installed and in your PATH.
+   - macOS: `brew install ffmpeg`
+   - Linux: `sudo apt-get install ffmpeg` or whatever your package manager is
+   - Windows: Use a package manager like Chocolatey or Scoop to install ffmpeg. example: `choco install ffmpeg` or `scoop install ffmpeg`. Alternatively, download from [ffmpeg.org](https://ffmpeg.org/download.html)
+3. Run the script:
+```bash
+python3 create_slideshow.py
+```
+
 ## Overview
 
-This project creates slideshow videos from a collection of images and videos, with smooth fade transitions, auto-rotation correction, and optional background music. The slideshow is designed to match the duration of the background music automatically.
+This project creates a slideshow video from a collection of images and videos, with smooth fade transitions, auto-rotation correction, and optional background music. The slideshow is designed to match the duration of the background music automatically. The output video will be saved in the root directory as `slideshow.mp4`. The user will be prompted to play the video in their default media player.
+
+The script supports a number of options beyond the default behavior and media.
+For example, the user can specify the duration of each slide, the duration of the fade transitions, the resolution of the output video, the background music, and the duration of the fade in and fade out of the background music.
 
 ## Features
 
@@ -53,7 +68,49 @@ python3 create_slideshow.py
 
 5. You'll be prompted to play the video in your default media player
 
-## File Organization
+## Configuration `slide_duration`: Duration for each image slide (default: 4.0 seconds).
+
+These are the default values for the configuration options. You can pass them as command line arguments to the script.
+
+- `fade_duration`: Duration of fade transitions (default: 0.5 seconds)
+- `music_trim_start`: Seconds to trim from start of music (default: 20.0)
+- `music_fade_in`: Fade-in duration for music (default: 2.0 seconds)
+- `music_fade_out`: Fade-out duration for music (default: 6.0 seconds)
+- `resolution`: Output resolution (default: '1920x1080')
+
+5. You'll be prompted to play the video in your default media player
+
+## Configuration
+
+All configuration options can be passed as command-line arguments. Run `python3 create_slideshow.py --help` to see all available options.
+
+### Command-Line Arguments
+
+- `--slide-duration`: Duration for each image slide in seconds (default: 4.0)
+- `--fade-duration`: Duration of fade transitions in seconds (default: 0.5)
+- `--fps`: Frames per second for output video (default: 30)
+- `--resolution`: Output video resolution as WIDTHxHEIGHT (default: 1920x1080)
+- `--music-trim-start`: Seconds to trim from start of music (default: 20.0)
+- `--music-fade-in`: Music fade-in duration in seconds (default: 2.0)
+- `--music-fade-out`: Music fade-out duration in seconds (default: 6.0)
+- `--output`: Custom output filename (default: slideshow.mp4)
+- `--no-play`: Skip prompt to play video after creation
+
+### Examples
+
+```bash
+# Use default settings
+python3 create_slideshow.py
+
+# Custom slide duration and fade
+python3 create_slideshow.py --slide-duration 5.0 --fade-duration 1.0
+
+# 4K resolution output
+python3 create_slideshow.py --resolution 3840x2160
+
+# Custom output filename, skip play prompt
+python3 create_slideshow.py --output my_slideshow.mp4 --no-play
+```
 
 ```
 .
@@ -97,4 +154,10 @@ python3 strip_metadata.py
 
 ## License
 
-This is a personal project - feel free to use and modify as needed.
+- The code in this repository is licensed under the [AGPL3](https://www.gnu.org/licenses/agpl-3.0.en.html).
+- The media in the `media/` folder is licensed under the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+## Credits
+
+- [ffmpeg](https://ffmpeg.org/)
+- [Python](https://www.python.org/)
