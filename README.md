@@ -2,7 +2,7 @@
 
 I made this for my son, who is the best thing I have ever done and will ever do.
 
-Mea maxuma culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly leading the choir of Heaven as we speak, finally embraced.
+Mea maxima culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly leading the Choir of Heaven as we speak, finally embraced.
 
 ---
 
