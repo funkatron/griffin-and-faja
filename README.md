@@ -1,5 +1,11 @@
 # Griffin and Faja Slideshow Generator
 
+I made this for my son, who is the best thing I have ever done and will ever do.
+
+Mea maxuma culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly leading the choir of Heaven as we speak, finally embraced.
+
+---
+
 A minimalist Python script to create beautiful slideshow videos from images and videos with background music.
 
 ## Overview
@@ -9,11 +15,11 @@ This project creates slideshow videos from a collection of images and videos, wi
 ## Features
 
 - **Memory-efficient**: Processes media files sequentially (one at a time)
-- **Smart transitions**: 
+- **Smart transitions**:
   - PNG images fade in/out smoothly
   - When a PNG and MOV share the same number, MOV plays first with fade-in only, then PNG appears instantly (no fade-in)
 - **Auto-rotation**: Automatically corrects orientation based on metadata
-- **Music integration**: 
+- **Music integration**:
   - Trims first 20 seconds from MP3
   - Fades in over 2 seconds at the start
   - Fades out over 6 seconds at the end
@@ -92,10 +98,3 @@ python3 strip_metadata.py
 ## License
 
 This is a personal project - feel free to use and modify as needed.
-
----
-
-I made this for my son, who is the best thing I have ever done and will ever do.
-
-Mea maxuma culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly leading the choir of Heaven as we speak, finally embraced.
-
