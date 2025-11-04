@@ -9,6 +9,7 @@ import subprocess
 import re
 import tempfile
 import platform
+import argparse
 from pathlib import Path
 
 
@@ -485,6 +486,65 @@ def open_video(video_file: str) -> None:
 
 def main():
     """Main function."""
+    parser = argparse.ArgumentParser(
+        description='Create a minimalist slideshow video from images and videos'
+    )
+    parser.add_argument(
+        '--slide-duration',
+        type=float,
+        default=4.0,
+        help='Duration for each image slide in seconds (default: 4.0)'
+    )
+    parser.add_argument(
+        '--fade-duration',
+        type=float,
+        default=0.5,
+        help='Duration of fade transitions in seconds (default: 0.5)'
+    )
+    parser.add_argument(
+        '--fps',
+        type=int,
+        default=30,
+        help='Frames per second for output video (default: 30)'
+    )
+    parser.add_argument(
+        '--resolution',
+        type=str,
+        default='1920x1080',
+        help='Output video resolution as WIDTHxHEIGHT (default: 1920x1080)'
+    )
+    parser.add_argument(
+        '--music-trim-start',
+        type=float,
+        default=20.0,
+        help='Seconds to trim from start of music (default: 20.0)'
+    )
+    parser.add_argument(
+        '--music-fade-in',
+        type=float,
+        default=2.0,
+        help='Music fade-in duration in seconds (default: 2.0)'
+    )
+    parser.add_argument(
+        '--music-fade-out',
+        type=float,
+        default=6.0,
+        help='Music fade-out duration in seconds (default: 6.0)'
+    )
+    parser.add_argument(
+        '--output',
+        type=str,
+        default=None,
+        help='Output filename (default: slideshow.mp4)'
+    )
+    parser.add_argument(
+        '--no-play',
+        action='store_true',
+        help='Skip prompt to play video after creation'
+    )
+
+    args = parser.parse_args()
+
     script_dir = Path(__file__).parent
     media_dir = script_dir / 'media'
 
@@ -500,7 +560,7 @@ def main():
         print("  macOS: brew install ffmpeg")
         return
 
-    output_file = str(script_dir / 'slideshow.mp4')
+    output_file = args.output if args.output else str(script_dir / 'slideshow.mp4')
     media_files = get_media_files(str(media_dir), exclude_output=output_file)
 
     if not media_files:
@@ -520,25 +580,24 @@ def main():
     if len(media_files) > 5:
         print(f"  ... and {len(media_files) - 5} more")
 
-    output_file = str(script_dir / 'slideshow.mp4')
     # Check for music in both main directory and media folder
     music_file = find_music_file(str(script_dir))
 
     create_slideshow(
         media_files=media_files,
         output_file=output_file,
-        slide_duration=4.0,
-        fade_duration=0.5,
-        fps=30,
-        resolution='1920x1080',
+        slide_duration=args.slide_duration,
+        fade_duration=args.fade_duration,
+        fps=args.fps,
+        resolution=args.resolution,
         music_file=music_file,
-        music_trim_start=20.0,
-        music_fade_in=2.0,
-        music_fade_out=6.0
+        music_trim_start=args.music_trim_start,
+        music_fade_in=args.music_fade_in,
+        music_fade_out=args.music_fade_out
     )
 
     # Prompt to play video
-    if Path(output_file).exists():
+    if not args.no_play and Path(output_file).exists():
         print(f"\n{'='*60}")
         response = input(f"\nPlay slideshow in default media player? [Y/n]: ").strip().lower()
         if response in ('', 'y', 'yes'):
