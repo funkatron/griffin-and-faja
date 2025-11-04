@@ -68,18 +68,6 @@ python3 create_slideshow.py
 
 5. You'll be prompted to play the video in your default media player
 
-## Configuration `slide_duration`: Duration for each image slide (default: 4.0 seconds).
-
-These are the default values for the configuration options. You can pass them as command line arguments to the script.
-
-- `fade_duration`: Duration of fade transitions (default: 0.5 seconds)
-- `music_trim_start`: Seconds to trim from start of music (default: 20.0)
-- `music_fade_in`: Fade-in duration for music (default: 2.0 seconds)
-- `music_fade_out`: Fade-out duration for music (default: 6.0 seconds)
-- `resolution`: Output resolution (default: '1920x1080')
-
-5. You'll be prompted to play the video in your default media player
-
 ## Configuration
 
 All configuration options can be passed as command-line arguments. Run `python3 create_slideshow.py --help` to see all available options.
@@ -122,17 +110,6 @@ python3 create_slideshow.py --output my_slideshow.mp4 --no-play
 │   └── *.mp3 (optional)
 └── slideshow.mp4        # Output video (created after running)
 ```
-
-## Configuration
-
-You can modify these settings in `create_slideshow.py`:
-
-- `slide_duration`: Duration for each image slide (default: 4.0 seconds)
-- `fade_duration`: Duration of fade transitions (default: 0.5 seconds)
-- `music_trim_start`: Seconds to trim from start of music (default: 20.0)
-- `music_fade_in`: Fade-in duration for music (default: 2.0 seconds)
-- `music_fade_out`: Fade-out duration for music (default: 6.0 seconds)
-- `resolution`: Output resolution (default: '1920x1080')
 
 ## Metadata Stripping
 
