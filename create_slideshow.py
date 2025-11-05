@@ -100,6 +100,49 @@ def check_ffmpeg() -> bool:
         return False
 
 
+def get_hardware_codec(codec: str) -> tuple[str, str]:
+    """
+    Get the best available codec for the given codec type.
+    Returns (codec_name, crf) tuple.
+    Uses hardware acceleration on macOS if available, otherwise software.
+    """
+    if platform.system() != 'Darwin':  # macOS only
+        # Use software encoders for non-macOS
+        if codec == 'h265':
+            return ('libx265', '28')
+        else:
+            return ('libx264', '23')
+
+    # On macOS, check for VideoToolbox hardware encoders
+    try:
+        # Check what encoders are available
+        result = subprocess.run(
+            ['ffmpeg', '-hide_banner', '-encoders'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        encoders = result.stdout
+
+        if codec == 'h265':
+            if 'hevc_videotoolbox' in encoders:
+                return ('hevc_videotoolbox', '28')
+            else:
+                return ('libx265', '28')
+        else:  # h264
+            if 'h264_videotoolbox' in encoders:
+                return ('h264_videotoolbox', '23')
+            else:
+                return ('libx264', '23')
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback to software if we can't check
+        if codec == 'h265':
+            return ('libx265', '28')
+        else:
+            return ('libx264', '23')
+
+
 def get_audio_duration(audio_file: str) -> float:
     """Get duration of audio file in seconds."""
     cmd = [
@@ -181,7 +224,8 @@ def create_image_segment(
     slide_duration: float,
     fade_duration: float,
     fps: int,
-    skip_fade_in: bool = False
+    skip_fade_in: bool = False,
+    codec: str = 'h264'
 ) -> None:
     """Create a single image slide video segment with fade and auto-rotation."""
     fade_start = slide_duration - fade_duration
@@ -203,6 +247,9 @@ def create_image_segment(
     elif rotation == 270:
         rotation_filter = 'transpose=2,'
 
+    # Choose codec and settings
+    video_codec, crf = get_hardware_codec(codec)
+
     cmd = [
         'ffmpeg',
         '-y',
@@ -216,9 +263,9 @@ def create_image_segment(
             f'setsar=1,fps={fps},'
             f'{fade_filter}'
         ),
-        '-c:v', 'libx264',
+        '-c:v', video_codec,
         '-preset', 'medium',
-        '-crf', '23',
+        '-crf', crf,
         '-pix_fmt', 'yuv420p',
         output_segment
     ]
@@ -233,7 +280,8 @@ def create_video_segment(
     height: int,
     fade_duration: float,
     fps: int,
-    skip_fade_out: bool = False
+    skip_fade_out: bool = False,
+    codec: str = 'h264'
 ) -> None:
     """Process a video file: scale, center, add fade transitions, auto-rotate."""
     duration = get_video_duration(video_file)
@@ -256,6 +304,9 @@ def create_video_segment(
     elif rotation == 270:
         rotation_filter = 'transpose=2,'
 
+    # Choose codec and settings
+    video_codec, crf = get_hardware_codec(codec)
+
     cmd = [
         'ffmpeg',
         '-y',
@@ -267,9 +318,9 @@ def create_video_segment(
             f'setsar=1,fps={fps},'
             f'{fade_filter}'
         ),
-        '-c:v', 'libx264',
+        '-c:v', video_codec,
         '-preset', 'medium',
-        '-crf', '23',
+        '-crf', crf,
         '-pix_fmt', 'yuv420p',
         '-an',  # Remove audio for consistency
         output_segment
@@ -288,7 +339,8 @@ def create_slideshow(
     music_file: str | None = None,
     music_trim_start: float = 20.0,
     music_fade_in: float = 2.0,
-    music_fade_out: float = 6.0
+    music_fade_out: float = 6.0,
+    codec: str = 'h264'
 ) -> None:
     """
     Create a minimalist slideshow video with smooth fade transitions.
@@ -358,12 +410,12 @@ def create_slideshow(
                 adjusted_slide_duration = slide_duration * duration_scale
                 create_image_segment(
                     file_path, segment_file, width, height,
-                    adjusted_slide_duration, fade_duration, fps, skip_fade_in
+                    adjusted_slide_duration, fade_duration, fps, skip_fade_in, codec
                 )
             else:  # video
                 create_video_segment(
                     file_path, segment_file, width, height,
-                    fade_duration, fps, skip_fade_out
+                    fade_duration, fps, skip_fade_out, codec
                 )
 
             segment_files.append(segment_file)
@@ -405,6 +457,9 @@ def create_slideshow(
 
             print(f"Video duration: {video_duration:.2f}s, Trimmed audio: {trimmed_duration:.2f}s")
 
+            # Choose codec and settings for final encoding
+            video_codec, crf = get_hardware_codec(codec)
+
             # Create silent audio track for video, then mix with trimmed music
             cmd = [
                 'ffmpeg',
@@ -422,11 +477,12 @@ def create_slideshow(
                 ),
                 '-map', '[v]',
                 '-map', '[outa]',
-                '-c:v', 'libx264',
+                '-c:v', video_codec,
                 '-preset', 'medium',
-                '-crf', '23',
+                '-crf', crf,
                 '-c:a', 'aac',
                 '-b:a', '192k',
+                '-movflags', '+faststart',  # Web optimization: faster streaming start
                 '-shortest',
                 output_file
             ]
@@ -482,49 +538,6 @@ def open_video(video_file: str) -> None:
         print(f"Error opening video: {e}")
     except FileNotFoundError:
         print("Could not find default media player")
-
-
-def create_web_version(input_file: str, output_file: str = None) -> str:
-    """
-    Create a web-optimized version of the slideshow video.
-    Optimized for GitHub README embedding with smaller file size.
-    """
-    if not Path(input_file).exists():
-        raise FileNotFoundError(f"Input file not found: {input_file}")
-    
-    if output_file is None:
-        input_path = Path(input_file)
-        output_file = str(input_path.parent / f"{input_path.stem}_web{input_path.suffix}")
-    
-    print(f"\nCreating web-optimized version: {output_file}")
-    
-    # Use ffmpeg to create a web-optimized version
-    # - Lower resolution: 1280x720 (720p) for faster loading
-    # - Lower bitrate for smaller file size
-    # - Fast preset for web streaming
-    # - Web-optimized H.264 profile
-    cmd = [
-        'ffmpeg',
-        '-y',
-        '-i', input_file,
-        '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=black',
-        '-c:v', 'libx264',
-        '-preset', 'fast',
-        '-crf', '28',  # Higher CRF = smaller file, slightly lower quality
-        '-profile:v', 'baseline',  # Baseline profile for better compatibility
-        '-level', '3.0',
-        '-pix_fmt', 'yuv420p',
-        '-movflags', '+faststart',  # Web optimization: move metadata to start
-        '-c:a', 'aac',
-        '-b:a', '128k',  # Lower audio bitrate
-        '-ar', '44100',
-        output_file
-    ]
-    
-    subprocess.run(cmd, check=True, capture_output=False, text=True)
-    print(f"✓ Web version created: {output_file}")
-    
-    return output_file
 
 
 def main():
@@ -586,11 +599,13 @@ def main():
         help='Skip prompt to play video after creation'
     )
     parser.add_argument(
-        '--create-web-version',
-        action='store_true',
-        help='Create a web-optimized version for GitHub README embedding'
+        '--codec',
+        type=str,
+        choices=['h264', 'h265'],
+        default='h264',
+        help='Video codec to use: h264 (default) or h265 (HEVC). Hardware acceleration used on macOS when available.'
     )
-    
+
     args = parser.parse_args()
 
     script_dir = Path(__file__).parent
@@ -641,17 +656,10 @@ def main():
         music_file=music_file,
         music_trim_start=args.music_trim_start,
         music_fade_in=args.music_fade_in,
-        music_fade_out=args.music_fade_out
+        music_fade_out=args.music_fade_out,
+        codec=args.codec
     )
 
-    # Create web version if requested
-    if args.create_web_version and Path(output_file).exists():
-        try:
-            web_output = create_web_version(output_file)
-            print(f"\n✓ Web-optimized version created: {web_output}")
-        except Exception as e:
-            print(f"\n⚠ Error creating web version: {e}")
-    
     # Prompt to play video
     if not args.no_play and Path(output_file).exists():
         print(f"\n{'='*60}")
