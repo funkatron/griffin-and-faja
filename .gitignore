@@ -24,6 +24,9 @@ Thumbs.db
 # Exclude output files and temp files
 .slideshow_temp/
 slideshow.mp4
+# Allow web-optimized versions for README embedding
+!slideshow_web.mp4
+!slideshow_web_loop.mp4
 *.tmp
 
 # Temporary files

@@ -484,6 +484,49 @@ def open_video(video_file: str) -> None:
         print("Could not find default media player")
 
 
+def create_web_version(input_file: str, output_file: str = None) -> str:
+    """
+    Create a web-optimized version of the slideshow video.
+    Optimized for GitHub README embedding with smaller file size.
+    """
+    if not Path(input_file).exists():
+        raise FileNotFoundError(f"Input file not found: {input_file}")
+    
+    if output_file is None:
+        input_path = Path(input_file)
+        output_file = str(input_path.parent / f"{input_path.stem}_web{input_path.suffix}")
+    
+    print(f"\nCreating web-optimized version: {output_file}")
+    
+    # Use ffmpeg to create a web-optimized version
+    # - Lower resolution: 1280x720 (720p) for faster loading
+    # - Lower bitrate for smaller file size
+    # - Fast preset for web streaming
+    # - Web-optimized H.264 profile
+    cmd = [
+        'ffmpeg',
+        '-y',
+        '-i', input_file,
+        '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=black',
+        '-c:v', 'libx264',
+        '-preset', 'fast',
+        '-crf', '28',  # Higher CRF = smaller file, slightly lower quality
+        '-profile:v', 'baseline',  # Baseline profile for better compatibility
+        '-level', '3.0',
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',  # Web optimization: move metadata to start
+        '-c:a', 'aac',
+        '-b:a', '128k',  # Lower audio bitrate
+        '-ar', '44100',
+        output_file
+    ]
+    
+    subprocess.run(cmd, check=True, capture_output=False, text=True)
+    print(f"✓ Web version created: {output_file}")
+    
+    return output_file
+
+
 def main():
     """Main function."""
     parser = argparse.ArgumentParser(
@@ -542,7 +585,12 @@ def main():
         action='store_true',
         help='Skip prompt to play video after creation'
     )
-
+    parser.add_argument(
+        '--create-web-version',
+        action='store_true',
+        help='Create a web-optimized version for GitHub README embedding'
+    )
+    
     args = parser.parse_args()
 
     script_dir = Path(__file__).parent
@@ -596,6 +644,14 @@ def main():
         music_fade_out=args.music_fade_out
     )
 
+    # Create web version if requested
+    if args.create_web_version and Path(output_file).exists():
+        try:
+            web_output = create_web_version(output_file)
+            print(f"\n✓ Web-optimized version created: {web_output}")
+        except Exception as e:
+            print(f"\n⚠ Error creating web version: {e}")
+    
     # Prompt to play video
     if not args.no_play and Path(output_file).exists():
         print(f"\n{'='*60}")

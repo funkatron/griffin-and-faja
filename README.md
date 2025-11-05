@@ -8,6 +8,11 @@ Mea maxima culpa to Mr. Evans and Ms. O'Connor, the latter of whom is assuredly 
 
 A minimalist Python script to create beautiful slideshow videos from images and videos with background music.
 
+## Preview
+
+<video src="slideshow_web_loop.mp4" controls loop autoplay muted width="100%"></video>
+
+
 ## Quick Start
 
 1. Clone the repository
@@ -34,6 +39,8 @@ For example, the user can specify the duration of each slide, the duration of th
   - PNG images fade in/out smoothly
   - When a PNG and MOV share the same number, MOV plays first with fade-in only, then PNG appears instantly (no fade-in)
 - **Auto-rotation**: Automatically corrects orientation based on metadata
+- **Hardware acceleration**: Automatically uses VideoToolbox hardware encoders on macOS for faster encoding
+- **Codec options**: Support for H.264 (default) and H.265 (HEVC) encoding. Hardware acceleration automatically used on macOS when available.
 - **Music integration**:
   - Trims first 20 seconds from MP3
   - Fades in over 2 seconds at the start
@@ -48,6 +55,28 @@ For example, the user can specify the duration of each slide, the duration of th
   - macOS: `brew install ffmpeg`
   - Linux: `sudo apt-get install ffmpeg`
   - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
+
+## Testing
+
+Run the automated test suite:
+
+```bash
+python3 test_slideshow.py
+```
+
+Or using pytest (if installed):
+
+```bash
+python3 -m pytest test_slideshow.py -v
+```
+
+The tests verify:
+- Python syntax and imports
+- ffmpeg availability
+- Hardware codec detection
+- Media file detection
+- Music file detection
+- Command-line interface validation
 
 ## Usage
 
@@ -83,6 +112,7 @@ All configuration options can be passed as command-line arguments. Run `python3 
 - `--music-fade-out`: Music fade-out duration in seconds (default: 6.0)
 - `--output`: Custom output filename (default: slideshow.mp4)
 - `--no-play`: Skip prompt to play video after creation
+- `--codec`: Video codec to use: `h264` (default) or `h265` (HEVC). Hardware acceleration automatically used on macOS when available
 
 ### Examples
 
@@ -98,11 +128,18 @@ python3 create_slideshow.py --resolution 3840x2160
 
 # Custom output filename, skip play prompt
 python3 create_slideshow.py --output my_slideshow.mp4 --no-play
+
+# Use H.265 (HEVC) codec for smaller file sizes (hardware accelerated on macOS)
+python3 create_slideshow.py --codec h265
+
+# Combine options: H.265, 4K resolution, custom output
+python3 create_slideshow.py --codec h265 --resolution 3840x2160 --output my_4k_slideshow.mp4
 ```
 
 ```
 .
 ├── create_slideshow.py  # Main slideshow generator
+├── test_slideshow.py    # Automated test suite
 ├── strip_metadata.py    # Utility to strip metadata from media files
 ├── media/               # Place your images and videos here
 │   ├── *.png
